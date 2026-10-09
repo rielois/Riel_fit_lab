@@ -1,0 +1,10 @@
+import {test} from 'node:test';
+import assert from 'node:assert/strict';
+import {ellipse,scale,measure} from './engine.mjs';
+test('circle circumference and scale calibration',()=>{assert.ok(Math.abs(ellipse(30,30)-30*Math.PI)<1e-10);assert.equal(scale([{x:0,y:0},{x:0,y:1000}],100),.1);});
+test('invalid and tilted calibration rejected',()=>{assert.throws(()=>scale([{x:0,y:0},{x:40,y:20}],100));assert.throws(()=>scale([{x:0,y:0},{x:100,y:1000}],100));assert.throws(()=>scale([{x:0,y:0},{x:0,y:1000}],NaN));});
+const p=(x,y)=>({x,y});
+const front={referenceCm:100,points:[p(0,0),p(0,1000),p(200,200),p(600,200),p(350,200),p(350,400),p(350,600),p(350,1200),p(350,1600),p(200,600),p(200,1100),p(200,1550),p(200,400),p(600,400),p(220,600),p(580,600),p(180,750),p(620,750)]};
+const side={referenceCm:100,points:[p(0,0),p(0,2000),p(200,800),p(700,800),p(200,1200),p(600,1200),p(200,1500),p(800,1500)]};
+test('all ten measurements; independent view scales; chosen hems',()=>{const r=measure(front,side);assert.equal(r.length,10);assert.equal(r.find(x=>x.name==='Skirt length').cm,50);assert.equal(r.find(x=>x.name==='Trouser length (outseam)').cm,95);assert.equal(r[0].cm,ellipse(40,25));assert.equal(r.find(x=>x.name==='Shoulder to floor').cm,140);});
+test('incomplete or sloped edges rejected',()=>{assert.throws(()=>measure({...front,points:[]},side));const f=structuredClone(front);f.points[13].y+=40;assert.throws(()=>measure(f,side),/horizontal/);});
